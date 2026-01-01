@@ -11,4 +11,4 @@ categories: jekyll update
 
 之后可能不定期更新，欢迎大家来玩！
 
-![日常杂项 DSC01103](/_assets/images/DSC01103.JPG)
+![日常杂项 DSC01103](/assets/images/DSC01103.JPG)
