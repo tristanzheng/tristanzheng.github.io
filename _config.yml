@@ -27,6 +27,18 @@ url: "" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: TristanZheng1
 github_username:  tristanzheng
 
+# Giscus Comments (free, GitHub Discussions based)
+# 需要先在 GitHub 仓库启用 Discussions 并安装 Giscus App
+# 获取方式: https://giscus.app
+giscus:
+  repo: "tristanzheng/tristanzheng.github.io"  # 改成你的仓库
+  repo_id: "R_kgDOOuia0A"  # 从 giscus.app 获取
+  category: "Announcements"  # Discussion 分类名称
+  category_id: "DIC_kwDOOuia0M4C3YKm"  # 从 giscus.app 获取
+  mapping: "pathname"
+  theme: "light"
+  lang: "zh-CN"
+
 # Build settings
 theme: minima
 plugins:
