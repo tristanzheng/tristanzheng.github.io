@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游记地图 - Tristan Zheng</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        
+        #map {
+            width: 100vw;
+            height: calc(100vh - 60px);
+        }
+        
+        .custom-popup .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .custom-popup .leaflet-popup-content {
+            margin: 0;
+            width: 300px !important;
+        }
+        
+        .popup-content {
+            background: #fff;
+        }
+        
+        .popup-cover {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .popup-body {
+            padding: 16px;
+        }
+        
+        .popup-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        
+        .popup-meta {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .popup-location {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .popup-excerpt {
+            font-size: 13px;
+            color: #555;
+            line-height: 1.6;
+            margin-top: 10px;
+        }
+        
+        .popup-link {
+            display: inline-block;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #007AFF;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .popup-link:hover {
+            text-decoration: underline;
+        }
+        
+        .custom-marker {
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            border: 3px solid #fff;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            box-shadow: 0 3px 10px rgba(255,107,107,0.4);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .custom-marker:hover {
+            transform: scale(1.15);
+        }
+        
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            right: 0;
+            top: 60px;
+            bottom: 0;
+            width: 340px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: -2px 0 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+        }
+        
+        .sidebar.open {
+            transform: translateX(0);
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: #fff;
+        }
+        
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            padding: 4px;
+            line-height: 1;
+        }
+        
+        .close-btn:hover {
+            color: #333;
+        }
+        
+        .post-list {
+            padding: 12px;
+        }
+        
+        .post-item {
+            padding: 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+        }
+        
+        .post-item:hover {
+            background: rgba(0,122,255,0.05);
+            border-color: rgba(0,122,255,0.1);
+        }
+        
+        .post-item.active {
+            background: rgba(0,122,255,0.08);
+            border-color: rgba(0,122,255,0.2);
+        }
+        
+        .post-item-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+        
+        .post-item-meta {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .post-item:hover .post-item-title {
+            color: #007AFF;
+        }
+        
+        /* 菜单按钮 */
+        .menu-btn {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 999;
+            background: linear-gradient(135deg, #007AFF, #0056CC);
+            color: #fff;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 25px;
+            box-shadow: 0 4px 20px rgba(0,122,255,0.4);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .menu-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0,122,255,0.5);
+        }
+        
+        /* 统计信息 */
+        .stats-bar {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            z-index: 999;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 12px 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .stats-bar span {
+            font-weight: 600;
+            color: #007AFF;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+            }
+            
+            .popup-content {
+                width: 260px !important;
+            }
+            
+            .popup-cover {
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <button class="menu-btn" onclick="toggleSidebar()">
+        <span>📍</span> 全部游记
+    </button>
+    
+    <div class="stats-bar">
+        共 <span id="postCount">0</span> 篇游记
+    </div>
+    
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span class="sidebar-title">全部游记</span>
+            <button class="close-btn" onclick="toggleSidebar()">×</button>
+        </div>
+        <div class="post-list" id="postList"></div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 游记数据 - 市级精度
+        const posts = [
+            {
+                id: 1,
+                title: "京都赏樱之旅",
+                slug: "kyoto-sakura",
+                date: "2024-04-10",
+                location: { lat: 35.0116, lng: 135.7681, name: "日本·京都市" },
+                cover: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=300&fit=crop",
+                excerpt: "春天的京都，樱花盛开，走在哲学之道上，感受古都的浪漫..."
+            },
+            {
+                id: 2,
+                title: "巴黎的咖啡时光",
+                slug: "paris-cafe",
+                date: "2024-05-20",
+                location: { lat: 48.8566, lng: 2.3522, name: "法国·巴黎市" },
+                cover: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop",
+                excerpt: "在蒙马特高地的咖啡馆里，度过一个慵懒的下午..."
+            },
+            {
+                id: 3,
+                title: "大理的风花雪月",
+                slug: "dali-spring",
+                date: "2024-03-15",
+                location: { lat: 25.5922, lng: 100.2679, name: "中国·大理市" },
+                cover: "https://images.unsplash.com/photo-1598928506311-c55ez361a17e?w=400&h=300&fit=crop",
+                excerpt: "苍山洱海，风花雪月，在大理古城寻找内心的平静..."
+            },
+            {
+                id: 4,
+                title: "纽约的霓虹之夜",
+                slug: "nyc-night",
+                date: "2024-06-08",
+                location: { lat: 40.7128, lng: -74.0060, name: "美国·纽约市" },
+                cover: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400&h=300&fit=crop",
+                excerpt: "时代广场的霓虹，布鲁克林的涂鸦，感受不夜城的魅力..."
+            },
+            {
+                id: 5,
+                title: "巴塞罗那的阳光",
+                slug: "barcelona-sun",
+                date: "2024-07-12",
+                location: { lat: 41.3851, lng: 2.1734, name: "西班牙·巴塞罗那市" },
+                cover: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&h=300&fit=crop",
+                excerpt: "高迪的建筑，地中海的阳光，这座城市永远充满活力..."
+            },
+            {
+                id: 6,
+                title: "成都的慢生活",
+                slug: "chengdu-slow",
+                date: "2024-02-28",
+                location: { lat: 30.5728, lng: 104.0668, name: "中国·成都市" },
+                cover: "https://images.unsplash.com/photo-1599922407565-ab65e02a7a1d?w=400&h=300&fit=crop",
+                excerpt: "泡一杯盖碗茶，看一场川剧变脸，享受成都的慢生活..."
+            },
+            {
+                id: 7,
+                title: "台北的夜市味道",
+                slug: "taipei-night-market",
+                date: "2024-01-15",
+                location: { lat: 25.0330, lng: 121.5654, name: "中国·台北市" },
+                cover: "https://images.unsplash.com/photo-1517931524326-bdd55a541177?w=400&h=300&fit=crop",
+                excerpt: "穿梭在士林夜市的摊位间，感受台北的烟火气息..."
+            },
+            {
+                id: 8,
+                title: "东京的迷失与发现",
+                slug: "tokyo-lost-found",
+                date: "2024-04-20",
+                location: { lat: 35.6762, lng: 139.6503, name: "日本·东京市" },
+                cover: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop",
+                excerpt: "在新宿的霓虹灯下迷路，在表参道发现惊喜..."
+            }
+        ];
+        
+        // 初始化地图 - 聚焦亚洲和欧洲
+        const map = L.map('map', {
+            zoomControl: true
+        }).setView([35.0, 105.0], 3);
+        
+        // 使用 OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap',
+            maxZoom: 18
+        }).addTo(map);
+        
+        // 自定义标记图标
+        const customIcon = L.divIcon({
+            className: 'custom-marker',
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+        
+        // 存储标记引用
+        const markers = {};
+        
+        // 添加标记点
+        posts.forEach(post => {
+            const marker = L.marker([post.location.lat, post.location.lng], { icon: customIcon })
+                .addTo(map);
+            
+            const popupContent = `
+                <div class="popup-content">
+                    <img src="${post.cover}" alt="${post.title}" class="popup-cover">
+                    <div class="popup-body">
+                        <div class="popup-title">${post.title}</div>
+                        <div class="popup-meta">${post.date}</div>
+                        <div class="popup-location">📍 ${post.location.name}</div>
+                        <div class="popup-excerpt">${post.excerpt}</div>
+                        <a href="/travel/${post.slug}" class="popup-link">阅读全文 →</a>
+                    </div>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent, { className: 'custom-popup' });
+            markers[post.id] = marker;
+        });
+        
+        // 更新统计
+        document.getElementById('postCount').textContent = posts.length;
+        
+        // 渲染侧边栏列表 - 按日期排序
+        const sortedPosts = [...posts].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const postListEl = document.getElementById('postList');
+        
+        sortedPosts.forEach(post => {
+            const item = document.createElement('div');
+            item.className = 'post-item';
+            item.innerHTML = `
+                <div class="post-item-title">${post.title}</div>
+                <div class="post-item-meta">${post.date} · ${post.location.name}</div>
+            `;
+            item.onclick = () => {
+                map.setView([post.location.lat, post.location.lng], 10);
+                markers[post.id].openPopup();
+                document.getElementById('sidebar').classList.remove('open');
+            };
+            postListEl.appendChild(item);
+        });
+        
+        // 切换侧边栏
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+        
+        // ESC 关闭侧边栏
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        });
+    </script>
+</body>
+</html>
