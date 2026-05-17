@@ -156,7 +156,6 @@ stars在前几年来过重庆，并在此行刚开始的时候推荐我去816核
 ![图28 扫街](/assets/images/2026-05-11/DSC02483.JPG)
 ![图29 扫街](/assets/images/2026-05-11/DSC02502.JPG)
 ![图30 扫街](/assets/images/2026-05-11/DSC02503.JPG)
-![图31 扫街](/assets/images/2026-05-11/DSC02504.JPG)
 ![图32 扫街](/assets/images/2026-05-11/DSC02512.JPG)
 > 涪陵的街道，涪陵的人
 
